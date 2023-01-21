@@ -11,4 +11,6 @@ type UserService interface {
 	Delete(ctx context.Context, user_id string)
 	FindById(ctx context.Context, user_id string) web.UserResponse
 	FindAll(ctx context.Context) []web.UserResponse
+	Auth(ctx context.Context, request web.UserAuthRequest) web.TokenResponse
+	CreateWithRefreshToken(ctx context.Context, refreshToken string) web.TokenResponse
 }

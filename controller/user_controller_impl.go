@@ -69,3 +69,25 @@ func (controller *UserControllerImpl) FindAll(writer http.ResponseWriter, reques
 	}
 	helper.WriteToResponseBody(writer, webResponse)
 }
+
+func (controller *UserControllerImpl) Auth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	userAuthRequest := web.UserAuthRequest{}
+	helper.ReadFromRequestBody(request, &userAuthRequest)
+
+	response := controller.UserService.Auth(request.Context(), userAuthRequest)
+	webResponse := web.Response{
+		Status: "OK",
+		Data:   response,
+	}
+	helper.WriteToResponseBody(writer, webResponse)
+}
+
+func (controller *UserControllerImpl) CreateWithRefreshToken(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	token := request.Header.Get("Authorization")
+	response := controller.UserService.CreateWithRefreshToken(request.Context(), token)
+	webResponse := web.Response{
+		Status: "OK",
+		Data:   response,
+	}
+	helper.WriteToResponseBody(writer, webResponse)
+}

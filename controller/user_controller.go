@@ -11,4 +11,6 @@ type UserController interface {
 	Delete(response http.ResponseWriter, request *http.Request, params httprouter.Params)
 	FindById(response http.ResponseWriter, request *http.Request, params httprouter.Params)
 	FindAll(response http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Auth(response http.ResponseWriter, request *http.Request, params httprouter.Params)
+	CreateWithRefreshToken(response http.ResponseWriter, request *http.Request, params httprouter.Params)
 }

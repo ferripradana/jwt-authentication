@@ -74,14 +74,14 @@ func (userRepositoryImpl *UserRepositoryImpl) FindById(ctx context.Context, tx *
 }
 
 func (userRepositoryImpl *UserRepositoryImpl) FindByEmail(ctx context.Context, tx *sql.Tx, email string) (domain.User, error) {
-	SQL := "select id, first_name, last_name, email, created_at, updated_at from users where email = ?"
+	SQL := "select id, first_name, last_name, email, created_at, updated_at, password from users where email = ?"
 	rows, err := tx.QueryContext(ctx, SQL, email)
 	helper.IfErrorPanic(err)
 	defer rows.Close()
 
 	user := domain.User{}
 	if rows.Next() {
-		err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+		err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.Password)
 		helper.IfErrorPanic(err)
 		return user, nil
 	} else {

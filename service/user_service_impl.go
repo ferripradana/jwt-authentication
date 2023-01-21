@@ -10,6 +10,9 @@ import (
 	"github.com/ferripradana/jwt-authentication/repository"
 	"github.com/ferripradana/jwt-authentication/utils"
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -105,4 +108,90 @@ func (service *UserServiceImpl) FindAll(ctx context.Context) []web.UserResponse 
 
 	users := service.UserRepository.FindAll(ctx, tx)
 	return utils.ToUserResponses(users)
+}
+
+func (service *UserServiceImpl) Auth(ctx context.Context, request web.UserAuthRequest) web.TokenResponse {
+	err := service.Validate.Struct(request)
+	helper.IfErrorPanic(err)
+
+	tx, err := service.DB.Begin()
+	helper.IfErrorPanic(err)
+	defer helper.CommitOrRollback(tx)
+
+	user, err := service.UserRepository.FindByEmail(ctx, tx, request.Email)
+	if err != nil {
+		panic(exception.NewUnauthorizedError(err.Error()))
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	if err != nil {
+		panic(exception.NewUnauthorizedError(err.Error()))
+	}
+
+	jwtExpiredTimeToken, err := strconv.Atoi(os.Getenv("JWT_EXPIRED_TIME_TOKEN"))
+	helper.IfErrorPanic(err)
+
+	jwtExpiredTimeRefreshToken, err := strconv.Atoi(os.Getenv("JWT_EXPIRED_TIME_REFRESH_TOKEN"))
+	helper.IfErrorPanic(err)
+
+	tokenCreateRequest := web.TokenCreateRequest{
+		UserId:    user.Id,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	token := web.TokenResponse{
+		Token: utils.CreateToken(
+			tokenCreateRequest,
+			time.Duration(jwtExpiredTimeToken),
+		),
+		RefreshToken: utils.CreateToken(
+			tokenCreateRequest,
+			time.Duration(jwtExpiredTimeRefreshToken),
+		),
+	}
+
+	return token
+
+}
+
+func (service *UserServiceImpl) CreateWithRefreshToken(ctx context.Context, refreshToken string) web.TokenResponse {
+	tx, err := service.DB.Begin()
+	helper.IfErrorPanic(err)
+	defer helper.CommitOrRollback(tx)
+
+	claims := utils.ClaimTokens(refreshToken)
+
+	user, err := service.UserRepository.FindById(ctx, tx, claims.UserId)
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
+
+	tokenCreateRequest := web.TokenCreateRequest{
+		UserId:    user.Id,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	jwtExpiredTimeToken, err := strconv.Atoi(os.Getenv("JWT_EXPIRED_TIME_TOKEN"))
+	helper.IfErrorPanic(err)
+
+	jwtExpiredTimeRefreshToken, err := strconv.Atoi(os.Getenv("JWT_EXPIRED_TIME_REFRESH_TOKEN"))
+	helper.IfErrorPanic(err)
+
+	newToken := web.TokenResponse{
+		Token: utils.CreateToken(
+			tokenCreateRequest,
+			time.Duration(jwtExpiredTimeToken),
+		),
+		RefreshToken: utils.CreateToken(
+			tokenCreateRequest,
+			time.Duration(jwtExpiredTimeRefreshToken),
+		),
+	}
+
+	return newToken
+
 }
