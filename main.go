@@ -24,7 +24,12 @@ func main() {
 	userRepository := repository.NewUserRepository()
 	userService := service.NewUserService(userRepository, db, validate)
 	userController := controller.NewUserController(userService)
-	router := app.NewRouter(userController)
+
+	imageRepository := repository.NewImageRepositoryImpl()
+	imageService := service.NewImageServiceImpl(imageRepository, db, validate)
+	imageController := controller.NewImageControllerImpl(imageService)
+
+	router := app.NewRouter(userController, imageController)
 
 	authMiddleware := middleware.NewAuthMiddleware(router)
 

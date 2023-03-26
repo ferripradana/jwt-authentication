@@ -23,3 +23,12 @@ func ToUserResponses(users []domain.User) []web.UserResponse {
 	}
 	return userList
 }
+
+func ToImageResponse(image domain.Images) web.ImageResponse {
+	return web.ImageResponse{
+		Id:        image.Id,
+		Path:      image.Path,
+		CreatedAt: image.CreatedAt,
+		UpdatedAt: image.UpdatedAt,
+	}
+}
